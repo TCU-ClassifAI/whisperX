@@ -41,6 +41,7 @@ class SingleAlignedSegment(TypedDict):
     text: str
     words: List[SingleWordSegment]
     chars: Optional[List[SingleCharSegment]]
+    avg_logprob: float
 
 
 class TranscriptionResult(TypedDict):
