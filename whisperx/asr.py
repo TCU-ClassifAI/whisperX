@@ -160,8 +160,8 @@ class FasterWhisperPipeline(Pipeline):
         return {'inputs': features}
 
     def _forward(self, model_inputs):
-        outputs = self.model.generate_segment_batched(model_inputs['inputs'], self.tokenizer, self.options)
-        return {'text': outputs}
+        model_outputs = self.model.generate_segment_batched(model_inputs['inputs'], self.tokenizer, self.options)
+        return model_outputs
 
     def postprocess(self, model_outputs):
         return model_outputs
@@ -232,11 +232,14 @@ class FasterWhisperPipeline(Pipeline):
                 percent_complete = base_progress / 2 if combined_progress else base_progress
                 print(f"Progress: {percent_complete:.2f}%...")
             text = out['text']
+            avg_logprob = out['avg_logprob']
             if batch_size in [0, 1, None]:
                 text = text[0]
+                avg_logprob = avg_logprob[0]
             segments.append(
                 {
                     "text": text,
+                    "avg_logprob": avg_logprob,
                     "start": round(vad_segments[idx]['start'], 3),
                     "end": round(vad_segments[idx]['end'], 3)
                 }
