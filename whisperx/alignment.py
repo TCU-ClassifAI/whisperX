@@ -323,6 +323,7 @@ def align(
                 "start": sentence_start,
                 "end": sentence_end,
                 "words": sentence_words,
+                "avg_logprob": avg_logprob
             })
 
             if return_char_alignments:
@@ -336,11 +337,13 @@ def align(
         aligned_subsegments["start"] = interpolate_nans(aligned_subsegments["start"], method=interpolate_method)
         aligned_subsegments["end"] = interpolate_nans(aligned_subsegments["end"], method=interpolate_method)
         # concatenate sentences with same timestamps
-        agg_dict = {"text": " ".join, "words": "sum"}
+        agg_dict = {"text": " ".join, "words": "sum", "avg_logprob": "mean"}
+
         if model_lang in LANGUAGES_WITHOUT_SPACES:
             agg_dict["text"] = "".join
         if return_char_alignments:
             agg_dict["chars"] = "sum"
+
         aligned_subsegments= aligned_subsegments.groupby(["start", "end"], as_index=False).agg(agg_dict)
         aligned_subsegments = aligned_subsegments.to_dict('records')
         aligned_segments += aligned_subsegments
