@@ -181,12 +181,14 @@ def align(
         t1 = segment["start"]
         t2 = segment["end"]
         text = segment["text"]
+        avg_logprob = segment.get("avg_logprob", 0)
 
         aligned_seg: SingleAlignedSegment = {
             "start": t1,
             "end": t2,
             "text": text,
             "words": [],
+            "avg_logprob": avg_logprob,
         }
 
         if return_char_alignments:
