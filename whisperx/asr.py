@@ -53,6 +53,7 @@ class WhisperModel(faster_whisper.WhisperModel):
         result = self.model.generate(
                 encoder_output,
                 [prompt] * batch_size,
+                return_scores=True,
                 beam_size=options.beam_size,
                 patience=options.patience,
                 length_penalty=options.length_penalty,
@@ -61,9 +62,19 @@ class WhisperModel(faster_whisper.WhisperModel):
                 suppress_tokens=options.suppress_tokens,
             )
 
-        tokens_batch = [x.sequences_ids[0] for x in result]
+        avg_logprobs = []
+        tokens_batch = []
+        for result in result:
+            tokens = result.sequences_ids[0]
+            tokens_batch.append(tokens)
 
-        def decode_batch(tokens: List[List[int]]) -> str:
+            # Calculate average log probability.
+            seq_len = len(tokens)
+            cum_logprob = result.scores[0] * (seq_len**options.length_penalty)
+            avg_logprob = cum_logprob / (seq_len + 1)
+            avg_logprobs.append(avg_logprob)
+
+        def decode_batch(tokens: List[List[int]]) -> List[str]:
             res = []
             for tk in tokens:
                 res.append([token for token in tk if token < tokenizer.eot])
@@ -72,7 +83,7 @@ class WhisperModel(faster_whisper.WhisperModel):
 
         text = decode_batch(tokens_batch)
 
-        return text
+        return {'text': text, 'avg_logprob': avg_logprobs}
 
     def encode(self, features: np.ndarray) -> ctranslate2.StorageView:
         # When the model is running on multiple GPUs, the encoder output should be moved
